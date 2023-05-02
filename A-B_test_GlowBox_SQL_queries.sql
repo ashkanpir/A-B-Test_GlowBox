@@ -1,20 +1,32 @@
 --With this first query, I calculate the number of users in each group and their conversion rates.
 
-SELECT 
-  g.group_name,
-  COUNT(DISTINCT g.uid) AS num_users,
-  COUNT(DISTINCT CASE WHEN COALESCE(a.spent, 0) > 0 THEN a.uid END) AS num_purchased,
-  COUNT(DISTINCT CASE WHEN COALESCE(a.spent, 0) > 0 THEN a.uid END) / COUNT(DISTINCT g.uid)::float AS conversion_rate_after,
-  COUNT(DISTINCT g.uid) AS total_users
-FROM groups g
-LEFT JOIN activity a ON a.uid = g.uid
-WHERE g.group_name = 'A' OR g.group_name = 'B'
-GROUP BY g.group_name;
+WITH 
+avg_spent AS (
+    SELECT group_name, AVG(spent) AS avg_spent
+    FROM groups g
+    JOIN activity a ON g.uid = a.uid
+    GROUP BY group_name
+),
+conversion_rate AS (
+    SELECT 
+      g.group_name,
+      COUNT(DISTINCT g.uid) AS num_users,
+      COUNT(DISTINCT CASE WHEN COALESCE(a.spent, 0) > 0 THEN a.uid END) AS num_purchased,
+      ROUND((COUNT(DISTINCT CASE WHEN COALESCE(a.spent, 0) > 0 THEN a.uid END) / COUNT(DISTINCT g.uid)::numeric), 5)
+      AS conversion_rate_after
+    FROM groups g
+    LEFT JOIN activity a ON a.uid = g.uid
+    WHERE g.group_name = 'A' OR g.group_name = 'B'
+    GROUP BY g.group_name
+)
+SELECT *
+FROM avg_spent
+JOIN conversion_rate ON avg_spent.group_name = conversion_rate.group_name;
 /*
 The result is:
 Group_name	 num_users              conversion_rate              total_users
-"A"		24343	955	0.03923099042845993	24343
-"B"		24600	1139	0.04630081300813008	24600
+"A"		    955				0.03923			24343
+"B"		    1139			0.04630			24600
 As a result of the above, we can calculate the standard error as below:*/
 SELECT SQRT((0.039*(1-0.039) + 0.046*(1-0.046)) / (24343 + 24600 - 2));
 
