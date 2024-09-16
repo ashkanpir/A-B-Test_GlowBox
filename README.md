@@ -27,4 +27,4 @@ This project involves the analysis of an A/B test conducted to evaluate the impa
 3. Run the notebook to reproduce the analysis and view the visualizations.
 
 ## Contact
-For any questions or suggestions, please reach out to [Your Contact Information].
+For any questions or suggestions, please reach out to ashkanpirastehfar@gmail.com.
